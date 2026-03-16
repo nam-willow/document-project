@@ -1,0 +1,37 @@
+app/
+├─ main.py
+├─ core/
+│  ├─ config.py
+│  └─ logging.py
+├─ api/
+│  └─ v1/
+│     └─ file_api.py
+├─ models/
+│  ├─ request_models.py
+│  ├─ response_models.py
+│  └─ db_models.py
+├─ services/
+│  ├─ file_service.py
+│  ├─ preprocess_service.py
+│  ├─ ocr_service.py
+│  ├─ extraction_service.py
+│  └─ db_service.py
+├─ repositories/
+│  └─ document_repository.py
+├─ ml_skill/
+│  ├─ README.md
+│  ├─ config/
+│  │  └─ model_config.example.json
+│  └─ weights/
+│     └─ .gitkeep
+├─ storage/
+│  ├─ uploads/
+│  └─ processed/
+└─ utils/
+   └─ file_utils.py
+
+tests/
+├─ test_file_upload.py
+└─ __init__.py
+
+requirements.txt
