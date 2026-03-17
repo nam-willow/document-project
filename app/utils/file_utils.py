@@ -13,6 +13,7 @@ def build_saved_filename(original_filename: str) -> str:
     """
     파일명 충돌 방지를 위해 UUID prefix 추가.
     """
+    print("build_saved_filename called | original_filename=%s", original_filename)
     extension = Path(original_filename).suffix
     stem = Path(original_filename).stem
     return f"{uuid4().hex}_{stem}{extension}"

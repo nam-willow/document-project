@@ -17,7 +17,7 @@ class DBService:
         extracted_json: dict,
     ) -> str:
         logger.info("DB save requested | filename=%s", filename)
-
+        print("DB save requested | filename=%s", filename)
         record = DocumentRecord(
             filename=filename,
             file_type=file_type,

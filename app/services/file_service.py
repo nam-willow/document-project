@@ -23,6 +23,7 @@ class FileService:
         """
         업로드 파일을 디스크에 저장.
         """
+        print("file_service.save_upload_file called | filename=%s", upload_file.filename)
         if not upload_file.filename:
             raise HTTPException(status_code=400, detail="filename is empty")
 
@@ -43,6 +44,7 @@ class FileService:
         """
         파일 확장자를 기준으로 image / pdf 판별.
         """
+        print("detect_file_type called | filename=%s", filename)
         ext = get_extension(filename)
 
         if ext in settings.ALLOWED_IMAGE_EXTENSIONS:
@@ -56,6 +58,7 @@ class FileService:
         """
         파일 타입에 따라 전처리 -> OCR -> 추출 -> (선택) DB 저장.
         """
+        print("파일 확장자에 따라 전처리 구분 로직) | file_path=%s, file_type=%s", file_path, file_type)
         logger.info("Processing started | file_type=%s | file_path=%s", file_type, file_path)
 
         if file_type == "image":
@@ -65,7 +68,9 @@ class FileService:
         else:
             raise HTTPException(status_code=400, detail=f"invalid file type: {file_type}")
 
+        print("전처리 끝났으니까 OCR 실행할게요) | preprocessed_path=%s", preprocessed_path)
         ocr_result = self.ocr_service.run_ocr(preprocessed_path, file_type)
+        print("OCR 끝났으니까 필드 추출 실행할게요) | ocr_result=%s", ocr_result)
         extracted_data = self.extraction_service.extract_fields(ocr_result)
 
         db_saved = False
@@ -79,6 +84,8 @@ class FileService:
                 extracted_json=extracted_data,
             )
             db_saved = True
+        else:
+            print("DB 저장은 하지 않을게요)")
 
         logger.info("Processing finished | file_path=%s", file_path)
 

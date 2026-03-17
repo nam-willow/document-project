@@ -12,9 +12,11 @@ class PreprocessService:
     def preprocess_image(self, file_path: str) -> str:
         logger.info("Image preprocessing started: %s", file_path)
         # TODO: 이미지 전처리 로직 구현
+        print("Image preprocessing started: %s", file_path)
         return file_path
 
     def preprocess_pdf(self, file_path: str) -> str:
         logger.info("PDF preprocessing started: %s", file_path)
         # TODO: PDF 전처리 로직 구현
+        print("PDF preprocessing started: %s", file_path)
         return file_path

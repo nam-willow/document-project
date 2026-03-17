@@ -13,6 +13,7 @@ class ExtractionService:
         logger.info("Field extraction started")
 
         # TODO: 실제 필드 추출 모델 결과로 교체
+        print("Field extraction started | ocr_result=%s", ocr_result)
         return {
             "document_type": "unknown",
             "fields": {
