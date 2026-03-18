@@ -3,7 +3,8 @@ from fastapi import HTTPException, UploadFile
 
 from app.core.config import settings
 from app.core.logging import get_logger
-from app.services.preprocess_service import PreprocessService
+from app.services.pdf_preprocess_service import PdfPreprocessService
+from app.services.img_preprocess_service import ImgPreprocessService
 from app.services.ocr_service import OCRService
 from app.services.extraction_service import ExtractionService
 from app.services.db_service import DBService
@@ -14,7 +15,8 @@ logger = get_logger(__name__)
 
 class FileService:
     def __init__(self) -> None:
-        self.preprocess_service = PreprocessService()
+        self.img_preprocess_service = ImgPreprocessService()
+        self.pdf_preprocess_service = PdfPreprocessService()
         self.ocr_service = OCRService()
         self.extraction_service = ExtractionService()
         self.db_service = DBService()
@@ -29,6 +31,7 @@ class FileService:
 
         saved_filename = build_saved_filename(upload_file.filename)
         saved_path = settings.UPLOAD_DIR / saved_filename
+        print("파일 저장할 경로는 %s 입니다", saved_path)
 
         content = await upload_file.read()
         if not content:
@@ -62,9 +65,9 @@ class FileService:
         logger.info("Processing started | file_type=%s | file_path=%s", file_type, file_path)
 
         if file_type == "image":
-            preprocessed_path = self.preprocess_service.preprocess_image(str(file_path))
+            preprocessed_path = self.img_preprocess_service.preprocess_image(str(file_path))
         elif file_type == "pdf":
-            preprocessed_path = self.preprocess_service.preprocess_pdf(str(file_path))
+            preprocessed_path = self.pdf_preprocess_service.preprocess_pdf(str(file_path))
         else:
             raise HTTPException(status_code=400, detail=f"invalid file type: {file_type}")
 

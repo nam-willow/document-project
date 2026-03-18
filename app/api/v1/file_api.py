@@ -19,9 +19,15 @@ async def upload_file(
     - 필요 시 DB 저장
     """
     print("/upload api called | filename=%s, save_to_db=%s", file.filename, save_to_db)
+
+    # Step 1: 파일 저장
     saved_path = await file_service.save_upload_file(file)
+    
+    # Step 2: 파일 타입 감지
     file_type = file_service.detect_file_type(file.filename)
     print("file type detected | file_type=%s", file_type)
+
+    # Step 3: 파일 처리 (전처리 -> OCR -> 필드 추출 -> DB 저장)
     result = file_service.process_file(
         file_path=saved_path,
         file_type=file_type,
