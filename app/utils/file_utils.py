@@ -2,6 +2,7 @@ from pathlib import Path
 from uuid import uuid4
 import cv2
 import numpy as np
+import os
 
 def get_extension(filename: str) -> str:
     """
@@ -43,3 +44,12 @@ def imwrite_unicode(path: str, img):
         return (f"image write error: {e}")
     encoded.tofile(path)
 
+def test_imge_save(out_dir, foldername, filename, img, is_test):
+    """
+    test 모드냐에 따라서 이미지 저장 여부 결정하는 함수
+    """
+    if is_test == True : 
+        outpath = os.path.join(out_dir, foldername)
+        os.makedirs(outpath, exist_ok=True)
+        out_path = os.path.join(outpath, filename)
+        imwrite_unicode(str(out_path), img)
