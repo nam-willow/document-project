@@ -70,6 +70,7 @@ class FileService:
             preprocessed_path = self.img_preprocess_service.preprocess_image(input_path=str(file_path), output_dir=str(settings.PROCESSED_DIR))
         elif file_type == "pdf":
             # preprocessed_path = self.pdf_preprocess_service.preprocess_pdf(str(file_path))
+            print("str(settings.PROCESSED_DIR): ", str(settings.PROCESSED_DIR))
             preprocessed_path = self.pdf_preprocess_service.preprocess_pdf(input_path=str(file_path), output_dir=str(settings.PROCESSED_DIR))
         else:
             raise HTTPException(status_code=400, detail=f"invalid file type: {file_type}")
