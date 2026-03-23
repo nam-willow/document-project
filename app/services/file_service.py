@@ -12,14 +12,20 @@ from app.utils.file_utils import get_extension, build_saved_filename
 
 logger = get_logger(__name__)
 
-
 class FileService:
-    def __init__(self) -> None:
-        self.img_preprocess_service = ImgPreprocessService()
-        self.pdf_preprocess_service = PdfPreprocessService()
-        self.ocr_service = OCRService()
-        self.extraction_service = ExtractionService()
-        self.db_service = DBService()
+    def __init__(
+        self,
+        img_preprocess_service=None,
+        pdf_preprocess_service=None,
+        ocr_service=None,
+        extraction_service=None,
+        db_service=None,
+    ):
+        self.img_preprocess_service = img_preprocess_service or ImgPreprocessService()
+        self.pdf_preprocess_service = pdf_preprocess_service or PdfPreprocessService()
+        self.ocr_service = ocr_service or OCRService()
+        self.extraction_service = extraction_service or ExtractionService()
+        self.db_service = db_service or DBService()
 
     async def save_upload_file(self, upload_file: UploadFile) -> Path:
         """
