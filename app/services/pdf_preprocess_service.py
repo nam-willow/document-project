@@ -31,10 +31,10 @@ class PdfPreprocessService:
 
 
 
-    def preprocess_pdf(self, file_path: str, output_path: str,dry_run: bool = False) -> str:
-        logger.info("PDF preprocessing started: %s", file_path)
-        # TODO: PDF 전처리 로직 구현
-        print("PDF preprocessing started: %s", file_path) 
+    # def preprocess_pdf(self, file_path: str, output_path: str,dry_run: bool = False) -> str:
+    #     logger.info("PDF preprocessing started: %s", file_path)
+    #     # TODO: PDF 전처리 로직 구현
+    #     print("PDF preprocessing started: %s", file_path) 
 
 
     def expand(r: fitz.Rect, pad: float) -> fitz.Rect:

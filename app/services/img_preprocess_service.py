@@ -294,7 +294,7 @@ class ImgPreprocessService:
 
 
     def preprocess_image(self, input_path:str, output_dir:str) -> list:
-
+        print("preprocess_image called | input_path=%s, output_dir=%s", input_path, output_dir)
         # 스크립트 실행할때는 TRUE로, MAIN호출이면 FALSE로 실행
         if __name__ == "__main__":
             is_test = True
@@ -309,7 +309,7 @@ class ImgPreprocessService:
             print("[ERROR] 400 폴더 경로입니다. 이미지 파일 경로 필요.")
             raise IsADirectoryError({"status": 400, "message": "폴더 경로입니다. 이미지 파일 경로 필요.", "data":input_path})
 
-        filename = input_path.split("\\")[-1]
+        filename = input_path.split("/")[-1]
         print("filename: ", filename)
         png_filename = filename.split(".")[0]
 
