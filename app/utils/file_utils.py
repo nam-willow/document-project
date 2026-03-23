@@ -44,7 +44,7 @@ def imwrite_unicode(path: str, img):
         return (f"image write error: {e}")
     encoded.tofile(path)
 
-def test_imge_save(out_dir, foldername, filename, img, is_test):
+def test_image_save(out_dir, foldername, filename, img, is_test):
     """
     test 모드냐에 따라서 이미지 저장 여부 결정하는 함수
     """

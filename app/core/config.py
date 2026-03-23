@@ -14,6 +14,7 @@ class Settings:
     UPLOAD_DIR = STORAGE_DIR / "uploads"
     PROCESSED_DIR = STORAGE_DIR / "processed"
 
+
     # 허용 확장자
     ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
     ALLOWED_PDF_EXTENSIONS = {".pdf"}
@@ -24,6 +25,7 @@ class Settings:
     # 추후 ML Skill 연결용 설정 경로
     ML_SKILL_DIR = BASE_DIR / "ml_skill"
     ML_SKILL_CONFIG_PATH = ML_SKILL_DIR / "config" / "model_config.example.json"
+
 
 
 settings = Settings()

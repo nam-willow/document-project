@@ -65,16 +65,20 @@ class FileService:
         logger.info("Processing started | file_type=%s | file_path=%s", file_type, file_path)
 
         if file_type == "image":
-            preprocessed_path = self.img_preprocess_service.preprocess_image(str(file_path))
+            # preprocessed_path = self.img_preprocess_service.preprocess_image(str(file_path))
+            preprocessed_path = self.img_preprocess_service.preprocess_image(input_path=str(file_path), output_dir=str(settings.PROCESSED_DIR))
         elif file_type == "pdf":
-            preprocessed_path = self.pdf_preprocess_service.preprocess_pdf(str(file_path))
+            # preprocessed_path = self.pdf_preprocess_service.preprocess_pdf(str(file_path))
+            preprocessed_path = self.pdf_preprocess_service.preprocess_pdf(input_path=str(file_path), output_dir=str(settings.PROCESSED_DIR))
         else:
             raise HTTPException(status_code=400, detail=f"invalid file type: {file_type}")
 
         print("전처리 끝났으니까 OCR 실행할게요) | preprocessed_path=%s", preprocessed_path)
-        ocr_result = self.ocr_service.run_ocr(preprocessed_path, file_type)
-        print("OCR 끝났으니까 필드 추출 실행할게요) | ocr_result=%s", ocr_result)
-        extracted_data = self.extraction_service.extract_fields(ocr_result)
+        for p in preprocessed_path:
+            logger.info("Preprocessing finished | preprocessed_path=%s", p)
+            ocr_result = self.ocr_service.run_ocr(p, file_type)
+            print("OCR 끝났으니까 필드 추출 실행할게요) | ocr_result=%s", ocr_result)
+            extracted_data = self.extraction_service.extract_fields(ocr_result)
 
         db_saved = False
         db_message = None
