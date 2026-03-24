@@ -8,6 +8,7 @@ from fastapi import HTTPException, UploadFile
 from app.services.file_service import FileService
 from app.core.config import settings
 
+# python -m pytest app/tests/test_services/test_file_services.py -v
 
 @pytest.fixture
 def file_service():
