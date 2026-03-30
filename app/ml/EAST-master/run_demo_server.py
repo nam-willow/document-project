@@ -35,7 +35,8 @@ def get_host_info():
 @functools.lru_cache(maxsize=100)
 def get_predictor(checkpoint_path):
     logger.info('loading model')
-    import tensorflow as tf
+    # import tensorflow as tf
+    import tensorflow.compat.v1 as tf
     import model
     from icdar import restore_rectangle
     import lanms

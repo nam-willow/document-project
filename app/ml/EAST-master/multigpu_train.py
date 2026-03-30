@@ -1,7 +1,9 @@
 import time
 import numpy as np
-import tensorflow as tf
-from tensorflow.contrib import slim
+# import tensorflow as tf
+# from tensorflow.contrib import slim
+import tensorflow.compat.v1 as tf
+import tf_slim as slim
 
 tf.app.flags.DEFINE_integer('input_size', 512, '')
 tf.app.flags.DEFINE_integer('batch_size_per_gpu', 14, '')

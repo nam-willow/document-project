@@ -3,7 +3,8 @@ import time
 import math
 import os
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 import locality_aware_nms as nms_locality
 import lanms
