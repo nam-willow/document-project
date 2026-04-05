@@ -69,6 +69,7 @@ class Model(nn.Module):
 
     def forward(self, input, text, is_train=True):
         """ Transformation stage """
+
         if not self.stages['Trans'] == "None":
             input = self.Transformation(input)
 
@@ -88,5 +89,4 @@ class Model(nn.Module):
             prediction = self.Prediction(contextual_feature.contiguous())
         else:
             prediction = self.Prediction(contextual_feature.contiguous(), text, is_train, batch_max_length=self.opt.batch_max_length)
-
         return prediction

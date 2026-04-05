@@ -92,6 +92,7 @@ def demo(opt):
             log.close()
 
 if __name__ == '__main__':
+    print("호출된 demo.py")
     parser = argparse.ArgumentParser()
     parser.add_argument('--image_folder', required=True, help='path to image_folder which contains text images')
     parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
