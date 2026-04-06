@@ -10,22 +10,28 @@ class OCRService:
     나중에 LayoutLMv3, PaddleOCR, 외부 ML Skill API 등으로 교체 가능.
     """
 
-    def run_ocr(self, predictor: STRPredictor, file_path: str, file_type: str) -> dict:
-        logger.info("OCR started | file_type=%s | file_path=%s", file_type, file_path)
+    def run_ocr(self, predictor: STRPredictor, file_paths: list[str]) -> list[str]:
+        logger.info("OCR started | file_type=%s | file_path=%s", file_paths)
+        results = []
+        for path in file_paths:
+            try:
+                result: STRResult = predictor.predict(path)  # 파일 경로 입력
+                results.append({
+                "path": path,
+                "text": result.text,
+                "confidence": result.confidence,
+                "elapsed_ms": result.elapsed_ms,
+                })
 
-        try:
-            with open(file_path, "rb") as f:
-                content = f.read()
-            result: STRResult = predictor.predict(content)  # bytes 입력
-        except Exception as e:
-            logger.exception("추론 실패")
-            # raise HTTPException(status_code=500, detail=str(e))
+            except FileNotFoundError:
+                logger.warning(f"이미지 없음: {path}")
+                results.append({"path": path, "text": "", "confidence": 0.0, "error": "file not found"})
 
-        return PredictResponse(
-            text=result.text,
-            confidence=result.confidence,
-            elapsed_ms=result.elapsed_ms,
-        )
+            except Exception as e:
+                logger.error(f"OCR 실패: {path} | {e}")
+                results.append({"path": path, "text": "", "confidence": 0.0, "error": str(e)})
+
+        return results
 
         # # TODO: 실제 OCR/ML Skill 호출로 교체
         # return {

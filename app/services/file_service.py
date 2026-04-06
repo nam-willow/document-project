@@ -78,11 +78,10 @@ class FileService:
             raise HTTPException(status_code=400, detail=f"invalid file type: {file_type}")
 
         print("전처리 끝났으니까 OCR 실행할게요) | preprocessed_path=%s", preprocessed_path)
-        for p in preprocessed_path:
-            logger.info("Preprocessing finished | preprocessed_path=%s", p)
-            ocr_result = self.ocr_service.run_ocr(predictor, p, file_type)
-            print("OCR 끝났으니까 필드 추출 실행할게요) | ocr_result=%s", ocr_result)
-            extracted_data = self.extraction_service.extract_fields(ocr_result)
+        logger.info("Preprocessing finished | preprocessed_path=%s", preprocessed_path)
+        ocr_result = self.ocr_service.run_ocr(predictor, preprocessed_path, file_type)
+        print("OCR 끝났으니까 필드 추출 실행할게요) | ocr_result=%s", ocr_result)
+        extracted_data = self.extraction_service.extract_fields(ocr_result)
 
         db_saved = False
         db_message = None
