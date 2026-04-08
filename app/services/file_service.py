@@ -10,7 +10,7 @@ from app.services.extraction_service import ExtractionService
 from app.services.db_service import DBService
 from app.utils.file_utils import get_extension, build_saved_filename
 
-from app.ml.str_predictor import STRPredictor
+from app.ml.deep_text_recognition_benchmark.str_predictor import STRPredictor
 
 logger = get_logger(__name__)
 
@@ -79,7 +79,7 @@ class FileService:
 
         print("전처리 끝났으니까 OCR 실행할게요) | preprocessed_path=%s", preprocessed_path)
         logger.info("Preprocessing finished | preprocessed_path=%s", preprocessed_path)
-        ocr_result = self.ocr_service.run_ocr(predictor, preprocessed_path, file_type)
+        ocr_result = self.ocr_service.run_ocr(predictor, preprocessed_path)
         print("OCR 끝났으니까 필드 추출 실행할게요) | ocr_result=%s", ocr_result)
         extracted_data = self.extraction_service.extract_fields(ocr_result)
 
