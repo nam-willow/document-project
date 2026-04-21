@@ -11,8 +11,8 @@ class OCRService:
     나중에 LayoutLMv3, PaddleOCR, 외부 ML Skill API 등으로 교체 가능.
     """
 
-    def run_ocr(self, predictor: STRPredictor, file_paths: List[str]) -> List[str]:
-        logger.info("OCR started | file_type=%s | file_path=%s", file_paths)
+    def run_ocr(self, predictor: STRPredictor, file_paths: List[str]) -> List[dict]:
+        logger.info("OCR started | file_path=%s", file_paths)
         results = []
         for path in file_paths:
             try:
