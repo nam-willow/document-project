@@ -199,7 +199,7 @@ class STRPredictor:
         pil_images = [self._to_pil(img) for img in images]
 
         # AlignCollate는 list를 받아 배치 텐서를 반환한다
-        tensor = self.align_collate([(img, "") for img in pil_images])
+        tensor, _ = self.align_collate([(img, "") for img in pil_images])
         tensor = tensor.to(self.device)
 
         with torch.no_grad():

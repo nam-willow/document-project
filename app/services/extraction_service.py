@@ -1,5 +1,6 @@
 from app.core.logging import get_logger
 from typing import List
+from typing import List, Dict, Any
 
 logger = get_logger(__name__)
 
@@ -10,7 +11,7 @@ class ExtractionService:
     나중에 학습된 추출 모델 결과를 여기에서 반환하도록 설계.
     """
 
-    def extract_fields(self, ocr_result:  List[dict]) ->  List[dict]:
+    def extract_fields(self, ocr_result:  List[Dict[str, Any]]) ->  List[Dict[str, Any]]:
         logger.info("Field extraction started")
         results = []
         # TODO: 실제 필드 추출 모델 결과로 교체
