@@ -208,6 +208,9 @@ __marimo__/
 
 # ml
 saved_models/
+demo_images/
+demo_image/
+storage/
 
 # log
 *.log
