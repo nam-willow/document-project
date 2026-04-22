@@ -25,7 +25,7 @@ class OCRService:
                 "confidence": result.confidence,
                 "elapsed_ms": result.elapsed_ms,
                 })
-
+                print(f"★★ results: {results}")
             except FileNotFoundError:
                 logger.warning(f"이미지 없음: {path}")
                 results.append({"path": path, "text": "", "confidence": 0.0, "error": "file not found"})

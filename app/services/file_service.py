@@ -6,6 +6,7 @@ from app.core.logging import get_logger
 from app.services.pdf_preprocess_service import PdfPreprocessService
 from app.services.img_preprocess_service import ImgPreprocessService
 from app.services.ocr_service import OCRService
+from app.services.ocr_service_easyocr import OCRService as EasyOCRService
 from app.services.extraction_service import ExtractionService
 from app.services.db_service import DBService
 from app.utils.file_utils import get_extension, build_saved_filename
@@ -20,6 +21,7 @@ class FileService:
         self.img_preprocess_service = ImgPreprocessService()
         self.pdf_preprocess_service = PdfPreprocessService()
         self.ocr_service = OCRService()
+        self.ocr_service_easyocr = EasyOCRService()
         self.extraction_service = ExtractionService()
         self.db_service = DBService()
 
@@ -67,11 +69,9 @@ class FileService:
         logger.info("Processing started | file_type=%s | file_path=%s", file_type, file_path)
 
         if file_type == "image":
-            # preprocessed_path = self.img_preprocess_service.preprocess_image(str(file_path))
             print("str(settings.PROCESSED_DIR): ", str(settings.PROCESSED_DIR))
             preprocessed_path = self.img_preprocess_service.preprocess_image(input_path=str(file_path), output_dir=str(settings.PROCESSED_DIR))
         elif file_type == "pdf":
-            # preprocessed_path = self.pdf_preprocess_service.preprocess_pdf(str(file_path))
             print("str(settings.PROCESSED_DIR): ", str(settings.PROCESSED_DIR))
             preprocessed_path = self.pdf_preprocess_service.preprocess_pdf(input_path=str(file_path), output_dir=str(settings.PROCESSED_DIR))
         else:
@@ -79,7 +79,14 @@ class FileService:
 
         print("전처리 끝났으니까 OCR 실행할게요) | preprocessed_path=%s", preprocessed_path)
         logger.info("Preprocessing finished | preprocessed_path=%s", preprocessed_path)
-        ocr_result = self.ocr_service.run_ocr(predictor, preprocessed_path)
+
+        # ocr_service는 기존 STRPredictor 기반 OCR, ocr_service_easyocr는 EasyOCR 기반 OCR로 분리하여 테스트 가능하도록 구현
+        # ocr_result = self.ocr_service.run_ocr(predictor, preprocessed_path)
+
+        # EasyOCR로 OCR 실행
+        ocr_result = self.ocr_service_easyocr.run_ocr(predictor, preprocessed_path)
+
+
         print("OCR 끝났으니까 필드 추출 실행할게요) | ocr_result=%s", ocr_result)
         extracted_data = self.extraction_service.extract_fields(ocr_result)
 
