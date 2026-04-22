@@ -266,5 +266,5 @@ class STRPredictor:
 
     def _preprocess(self, pil_img: Image.Image) -> torch.Tensor:
         """PIL 이미지 → 모델 입력 텐서 (AlignCollate 활용)"""
-        tensor = self.align_collate([(pil_img, "")])
+        tensor, _ = self.align_collate([(pil_img, "")])
         return tensor.to(self.device)

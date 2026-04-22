@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import List, Any, Dict, Optional
 from pydantic import BaseModel
 
 
@@ -17,6 +17,6 @@ class UploadResponse(BaseModel):
     file_type: str
     saved_path: str
     preprocess_target: str
-    extracted_data: Dict[str, Any]
+    extracted_data: List[Dict[str, Any]]
     db_saved: bool
     db_message: Optional[str] = None

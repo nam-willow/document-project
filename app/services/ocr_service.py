@@ -1,6 +1,6 @@
 from app.core.logging import get_logger
 from app.ml.deep_text_recognition_benchmark.str_predictor import STRPredictor, STRResult
-from typing import List
+from typing import List, Dict, Any
 
 logger = get_logger(__name__)
 
@@ -11,12 +11,14 @@ class OCRService:
     나중에 LayoutLMv3, PaddleOCR, 외부 ML Skill API 등으로 교체 가능.
     """
 
-    def run_ocr(self, predictor: STRPredictor, file_paths: List[str]) -> List[dict]:
+    def run_ocr(self, predictor: STRPredictor, file_paths: List[str]) -> List[Dict[str, Any]]:
         logger.info("OCR started | file_path=%s", file_paths)
         results = []
         for path in file_paths:
             try:
                 result: STRResult = predictor.predict(path)  # 파일 경로 입력
+                
+                logger.info(f"result.text: {result.text}")
                 results.append({
                 "path": path,
                 "text": result.text,
@@ -33,12 +35,3 @@ class OCRService:
                 results.append({"path": path, "text": "", "confidence": 0.0, "error": str(e)})
             print("ocr 종료")
         return results
-
-        # # TODO: 실제 OCR/ML Skill 호출로 교체
-        # return {
-        #     "raw_text": f"stub ocr result from {file_type}",
-        #     "blocks": [
-        #         {"text": "sample_text_1", "confidence": 0.98},
-        #         {"text": "sample_text_2", "confidence": 0.95},
-        #     ],
-        # }

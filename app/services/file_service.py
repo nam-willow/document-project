@@ -87,13 +87,17 @@ class FileService:
         db_message = None
 
         if save_to_db:
-            db_message = self.db_service.save_document_result(
-                filename=file_path.name,
-                file_type=file_type,
-                saved_path=str(file_path),
-                extracted_json=extracted_data,
-            )
+            for item in extracted_data:
+                print(f"extracted_data item: {item}")
+                db_message = self.db_service.save_document_result(
+                    filename=file_path.name,
+                    file_type=file_type,
+                    saved_path=str(file_path),
+                    extracted_json=item,
+                )
+            
             db_saved = True
+
         else:
             print("DB 저장은 하지 않을게요)")
 
