@@ -108,7 +108,6 @@ document-project/
 │   │   └── document_repository.py # DB 쿼리 모음
 │   ├── ml/
 │   │   ├── EAST-master/           # 텍스트 영역 검출 모델
-│   │   ├── deep_text_recognition_benchmark/  # STR OCR 모델
 │   │   └── easyocr_predictor.py   # EasyOCR 래퍼
 │   ├── storage/
 │   │   ├── uploads/               # 업로드된 원본 파일 저장
@@ -184,7 +183,7 @@ ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxx
 
 # DB 연결 주소 (MySQL 사용 시)
 # DB 저장 기능을 쓰지 않으면 비워도 됨
-DATABASE_URL=mysql+pymysql://user:password@localhost:3306/document_db
+DATABASE_URL=mysql+pymysql://user:password@localhost:3306/document_db(예시)
 ```
 
 > `.env` 파일은 절대 git에 올리면 안 됩니다. `.gitignore`에 추가되어 있는지 꼭 확인하세요.
