@@ -71,9 +71,9 @@
 | ✅ 완료 | 파일 업로드 + 타입 판별 | 완성 |
 | ✅ 완료 | EasyOCR 연동 | 완성 |
 | ✅ 완료 | STR(Deep Text Recognition) 연동 | 완성 |
-| ⬜ 예정 | 이미지 전처리 연결 (코드 보유 중) | 연결 필요 |
-| ⬜ 예정 | PDF 전처리 연결 (코드 보유 중) | 연결 필요 |
-| ⬜ 예정 | Celery + Redis 작업 큐 | 구현 필요 |
+| ✅ 완료 | 이미지 전처리 연결 (코드 보유 중) | 연결 필요 |
+| ✅ 완료 | PDF 전처리 연결 (코드 보유 중) | 연결 필요 |
+| ✅ 완료 | Celery + Redis 작업 큐 | 구현 필요 |
 | ⬜ 예정 | LLM 기반 필드 추출 (1단계) | 구현 필요 |
 | ⬜ 예정 | LayoutLMv3 파인튜닝 (2단계) | 학습 필요 |
 | ⬜ 예정 | 결과 조회 API | 구현 필요 |
@@ -135,7 +135,7 @@ python --version   # 3.8 이상인지 확인
 ```
 
 ### 2. Redis (작업 큐용)
-Redis는 "줄 서기 관리자" 역할입니다. 여러 요청이 동시에 들어와도 순서대로 처리하게 해줍니다.
+
 
 **Windows (WSL 환경):**
 ```bash
@@ -193,6 +193,11 @@ DATABASE_URL=mysql+pymysql://user:password@localhost:3306/document_db
 
 ## 서버 실행 방법
 
+**스크립트 사용 시**
+```bash
+bash run.sh
+```
+
 터미널을 **3개** 열어야 합니다.
 
 **터미널 1: FastAPI 서버**
@@ -213,6 +218,8 @@ cd document-project
 celery -A app.worker flower --port=5555
 # 브라우저에서 http://localhost:5555 접속하면 큐 현황 볼 수 있음
 ```
+
+
 
 ---
 
@@ -391,6 +398,12 @@ redis-cli ping                    # 다시 시도
 - Google Colab 무료 버전(T4 GPU)으로 시작 가능합니다
 - 데이터가 적으면 CPU로도 가능하지만 매우 느립니다
 
+**Q: OCR실행중에 종료가 안되요**
+- Celery 사용과 EasyOCR Pytorch가 충돌되면서 데드락(deadlock)이 발생했습니다.
+- Celery를 실행할때 단일로 실행하도록 처리해줬어요 
+```bash
+celery -A app.worker worker --loglevel=info --pool=solo 
+```
 ---
 
 ## 기술 스택 요약
@@ -398,9 +411,9 @@ redis-cli ping                    # 다시 시도
 ```
 언어:      Python 3.8
 API 서버:  FastAPI + Uvicorn
-OCR:       EasyOCR / Deep Text Recognition (STR)
+OCR:       EasyOCR
 작업 큐:   Celery + Redis
-AI 추출:   Claude API (1단계) → LayoutLMv3 파인튜닝 (2단계)
+AI 추출:   Claude API (1단계) → LayoutLMv3 파인튜닝 (2단계)(진행중)
 DB:        MySQL (선택)
 테스트:    pytest
 ```
