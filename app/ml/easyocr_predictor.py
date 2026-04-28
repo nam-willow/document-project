@@ -80,10 +80,12 @@ class EasyOCRPredictor:
 
         # ── 입력 타입 정규화 ─────────────────────────────────────────────
         img_input = self._to_input(image)
+        logger.info("입력 타입 정규화") 
 
         # ── EasyOCR 추론 ─────────────────────────────────────────────────
         # 반환: [([좌표], "텍스트", confidence), ...]
         raw_results = self.reader.readtext(img_input)
+        logger.info("EasyOCR 추론 완료") 
 
         if not raw_results:
             logger.warning("OCR 결과 없음 | image=%s", image)
@@ -92,6 +94,7 @@ class EasyOCRPredictor:
         # ── 결과 정리 ────────────────────────────────────────────────────
         lines = [text for (_, text, conf) in raw_results if conf > 0.3]
         confidences = [conf for (_, _, conf) in raw_results]
+        logger.info("결과 정리 ") 
 
         full_text = "\n".join(lines)
         avg_confidence = round(sum(confidences) / len(confidences), 4)

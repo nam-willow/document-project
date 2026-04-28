@@ -5,13 +5,13 @@ from app.core.config import settings
 from app.core.logging import get_logger
 from app.services.pdf_preprocess_service import PdfPreprocessService
 from app.services.img_preprocess_service import ImgPreprocessService
-from app.services.ocr_service import OCRService
+# from app.services.ocr_service import OCRService
 from app.services.ocr_service_easyocr import OCRService as EasyOCRService
 from app.services.extraction_service import ExtractionService
 from app.services.db_service import DBService
 from app.utils.file_utils import get_extension, build_saved_filename
 
-from app.ml.deep_text_recognition_benchmark.str_predictor import STRPredictor
+from app.ml.easyocr_predictor import EasyOCRPredictor
 
 logger = get_logger(__name__)
 
@@ -20,7 +20,7 @@ class FileService:
     def __init__(self) -> None:
         self.img_preprocess_service = ImgPreprocessService()
         self.pdf_preprocess_service = PdfPreprocessService()
-        self.ocr_service = OCRService()
+        # self.ocr_service = OCRService()
         self.ocr_service_easyocr = EasyOCRService()
         self.extraction_service = ExtractionService()
         self.db_service = DBService()
@@ -61,7 +61,7 @@ class FileService:
 
         raise HTTPException(status_code=400, detail=f"unsupported file extension: {ext}")
 
-    def process_file(self, predictor: STRPredictor, file_path: Path, file_type: str, save_to_db: bool = False) -> dict:
+    def process_file(self, predictor: EasyOCRPredictor, file_path: Path, file_type: str, save_to_db: bool = False) -> dict:
         """
         파일 타입에 따라 전처리 -> OCR -> 추출 -> (선택) DB 저장.
         """
@@ -80,12 +80,8 @@ class FileService:
         print("전처리 끝났으니까 OCR 실행할게요) | preprocessed_path=%s", preprocessed_path)
         logger.info("Preprocessing finished | preprocessed_path=%s", preprocessed_path)
 
-        # ocr_service는 기존 STRPredictor 기반 OCR, ocr_service_easyocr는 EasyOCR 기반 OCR로 분리하여 테스트 가능하도록 구현
-        # ocr_result = self.ocr_service.run_ocr(predictor, preprocessed_path)
-
         # EasyOCR로 OCR 실행
         ocr_result = self.ocr_service_easyocr.run_ocr(predictor, preprocessed_path)
-
 
         print("OCR 끝났으니까 필드 추출 실행할게요) | ocr_result=%s", ocr_result)
         extracted_data = self.extraction_service.extract_fields(ocr_result)

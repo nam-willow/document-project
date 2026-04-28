@@ -1,4 +1,4 @@
-from typing import List, Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 
 
@@ -20,3 +20,16 @@ class UploadResponse(BaseModel):
     extracted_data: List[Dict[str, Any]]
     db_saved: bool
     db_message: Optional[str] = None
+
+
+class JobAcceptedResponse(BaseModel):
+    job_id: str
+    status: str
+    message: str
+
+
+class JobResultResponse(BaseModel):
+    job_id: str
+    status: str
+    result: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None

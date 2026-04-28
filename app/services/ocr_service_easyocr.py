@@ -22,6 +22,7 @@ class OCRService:
 
         for idx, path in enumerate(file_paths, start=1):
             try:
+                logger.info("OCR 처리 중 | path = %s", path)
                 result: OCRResult = predictor.predict(path)
                 results.append({
                     "path": path,
