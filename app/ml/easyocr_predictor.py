@@ -17,8 +17,13 @@ from pathlib import Path
 from typing import List, Union
 
 import numpy as np
+import torch
+import cv2
 import easyocr
 from PIL import Image
+
+torch.set_num_threads(1)
+cv2.setNumThreads(0)
 
 logger = logging.getLogger(__name__)
 

@@ -17,7 +17,7 @@ sudo service redis-server start 2>/dev/null || true
 
 # Celery Worker 백그라운드 실행
 echo ">>> Celery Worker 시작"
-celery -A app.worker worker --loglevel=info &
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 celery -A app.worker worker --loglevel=info --pool=solo &
 CELERY_PID=$!
 
 # 스크립트 종료 시 Celery도 같이 종료

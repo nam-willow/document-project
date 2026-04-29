@@ -29,7 +29,7 @@ async def process_document(file: UploadFile = File(...)):
     file_type = _file_service.detect_file_type(file.filename)
 
     task = process_document_task.delay(str(saved_path), file_type)
-
+    print( "작업이 큐에 적재되었습니다 | job_id=%s", task.id)
     return JobAcceptedResponse(
         job_id=task.id,
         status="queued",
