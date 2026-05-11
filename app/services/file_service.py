@@ -4,7 +4,7 @@ from fastapi import HTTPException, UploadFile
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.services.pdf_preprocess_service import PdfPreprocessService
-from app.services.img_preprocess_service import ImgPreprocessService
+from app.services.img_preprocess_service import  ImgPreprocessService, ImgBackgroundPreprocess
 # from app.services.ocr_service import OCRService
 from app.services.ocr_service_easyocr import OCRService as EasyOCRService
 from app.services.extraction_service import ExtractionService
@@ -18,7 +18,8 @@ logger = get_logger(__name__)
 
 class FileService:
     def __init__(self) -> None:
-        self.img_preprocess_service = ImgPreprocessService()
+        # self.img_preprocess_service = ImgPreprocessService()
+        self.img_preprocess_service = ImgBackgroundPreprocess()
         self.pdf_preprocess_service = PdfPreprocessService()
         # self.ocr_service = OCRService()
         self.ocr_service_easyocr = EasyOCRService()

@@ -3,7 +3,7 @@ import fitz  # PyMuPDF
 import math
 from pathlib import Path
 from statistics import median
-from typing import Any
+from typing import Any, List, Optional, Tuple
 import cv2
 import numpy as np
 import os
@@ -395,7 +395,315 @@ class ImgPreprocessService:
             doc_code = filename.split("_")[0]
             verification_id = filename.split("_")[1]
 
-            result = main(input_path, output_dir, doc_code, verification_id)
+            result = preprocess_image(input_path, output_dir, doc_code, verification_id)
             print(f"[{result}] | {filename}")
 
             print("-------- 실행 종료", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "--------")
+
+
+# ---------------------------------------------------------------------------
+# [B방식 v2] rembg 딥러닝 기반 배경 분리 — GPU 없음 / 인터넷 없음 환경
+# ---------------------------------------------------------------------------
+
+class ImgBackgroundPreprocess:
+    """
+    rembg(u2net) 기반 오프라인 배경 분리 서비스 (v2).
+
+    v1 대비 개선:
+        - 세션 인스턴스 캐싱 (배치 처리 시 1회만 로드)
+        - 알파 채널 분포 기반 신뢰도 추정
+        - alpha_threshold 자동 탐색 (Otsu 또는 분포 기반)
+        - u2netp(경량 모델) 자동 폴백 지원
+        - 반투명 영역 보존 옵션 (transparent_mode)
+
+    Usage:
+        sep = ImgBackgroundPreprocess(model_path="./u2net.onnx")
+        cropped, mask, conf = sep.remove_background_from_file("product.jpg")
+        cropped, mask, conf = sep.remove_background(img_array)
+    """
+
+    DEFAULT_MODEL_PATH  = Path.home() / ".u2net" / "u2net.onnx"
+    FALLBACK_MODEL_PATH = Path.home() / ".u2net" / "u2netp.onnx"
+    MIN_MODEL_SIZE_MB   = 10
+
+    def __init__(
+        self,
+        model_path:       Optional[str] = None,
+        fallback_small:   bool = True,
+        transparent_mode: bool = False,
+    ):
+        """
+        Args:
+            model_path:       u2net.onnx 경로. None이면 기본 경로(~/.u2net) 사용.
+            fallback_small:   True면 u2net 없을 때 u2netp(소형) 시도.
+            transparent_mode: True면 반투명 영역도 마스크에 포함.
+        """
+        self.transparent_mode = transparent_mode
+        self._rembg_session   = None
+
+        self._validate_environment()
+        self.model_path = self._resolve_model(model_path, fallback_small)
+        os.environ["U2NET_HOME"] = str(self.model_path.parent)
+        self._rembg_session = self._load_session()
+
+    # ------------------------------------------------------------------
+    # 초기화
+    # ------------------------------------------------------------------
+
+    def _validate_environment(self) -> None:
+        logger.info("_validate_environment | 필수 패키지 점검")
+        missing = []
+        for pkg, import_name in [("rembg", "rembg"), ("onnxruntime", "onnxruntime"), ("pillow", "PIL")]:
+            try:
+                __import__(import_name)
+            except ImportError:
+                missing.append(pkg)
+        if missing:
+            raise ImportError(
+                f"필수 패키지 미설치: {', '.join(missing)}\n"
+                "오프라인 설치: pip install --no-index --find-links=./offline_packages "
+                + " ".join(missing)
+            )
+
+    def _resolve_model(self, model_path: Optional[str], fallback_small: bool) -> Path:
+        """모델 파일 경로 결정: 명시 경로 → u2net 기본 → u2netp 폴백"""
+        logger.info("_resolve_model | 모델 파일 탐색")
+        candidates = []
+        if model_path:
+            candidates.append(Path(model_path))
+        candidates.append(self.DEFAULT_MODEL_PATH)
+        if fallback_small:
+            candidates.append(self.FALLBACK_MODEL_PATH)
+
+        for p in candidates:
+            if not p.exists():
+                continue
+            size_mb = p.stat().st_size / (1024 * 1024)
+            if size_mb < self.MIN_MODEL_SIZE_MB:
+                continue
+            return p
+
+        searched = "\n  ".join(str(c) for c in candidates)
+        raise FileNotFoundError(
+            f"\n[모델 파일 없음] 아래 경로를 모두 확인했으나 유효한 파일 없음:\n  {searched}\n\n"
+            "인터넷 되는 PC에서 실행 후 .onnx 파일 복사:\n"
+            "  python -c \"from rembg import remove; import numpy as np; "
+            "remove(np.zeros((10,10,3), dtype=np.uint8))\"\n"
+            "  모델 위치: ~/.u2net/u2net.onnx"
+        )
+
+    def _load_session(self):
+        """rembg 세션 로드 (배치 처리 시 1회만 로드)"""
+        from rembg import new_session
+        logger.info("_load_session | rembg 세션 로드")
+        model_name = "u2net" if "u2net.onnx" in self.model_path.name else "u2netp"
+        return new_session(model_name=model_name, providers=["CPUExecutionProvider"])
+
+    # ------------------------------------------------------------------
+    # 배경 분리 퍼블릭 메서드
+    # ------------------------------------------------------------------
+
+    def remove_background_from_file(
+        self,
+        image_path:   str,
+        post_process: bool = True,
+    ) -> Tuple[np.ndarray, np.ndarray, float]:
+        """
+        파일 경로로 배경 분리.
+
+        Returns:
+            (크롭된 BGR 이미지, 이진 마스크, 신뢰도 0~1)
+        """
+        logger.info("remove_background_from_file | 파일 경로로 배경 분리")
+        path = Path(image_path)
+        if not path.exists():
+            raise FileNotFoundError(f"이미지 없음: {image_path}")
+        if path.stat().st_size == 0:
+            raise ValueError(f"빈 파일: {image_path}")
+        image = cv2.imread(str(path))
+        if image is None:
+            raise ValueError(f"이미지 읽기 실패: {image_path}")
+        return self.remove_background(image, post_process=post_process)
+
+    def remove_background(
+        self,
+        image:        np.ndarray,
+        post_process: bool = True,
+    ) -> Tuple[np.ndarray, np.ndarray, float]:
+        """
+        numpy array(BGR)로 배경 분리.
+
+        Returns:
+            (크롭된 BGR 이미지, 이진 마스크, 신뢰도 0~1)
+        """
+        logger.info("remove_background | 이미지 배열로 배경 분리")
+        if image is None or image.size == 0:
+            raise ValueError("빈 이미지 배열")
+        if len(image.shape) != 3 or image.shape[2] != 3:
+            raise ValueError(f"BGR 3채널 필요. shape={image.shape}")
+
+        from PIL import Image as PILImage
+        from rembg import remove
+
+        pil_image = PILImage.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        try:
+            output_pil = remove(pil_image, session=self._rembg_session)
+        except Exception as e:
+            logger.error(f"rembg 추론 실패: {e}")
+            raise RuntimeError(f"배경 제거 실패: {e}") from e
+
+        output_arr    = np.array(output_pil)      # (H, W, 4) RGBA
+        alpha_channel = output_arr[:, :, 3]
+
+        confidence = self._estimate_confidence(alpha_channel)
+        threshold  = self._auto_threshold(alpha_channel)
+        _, mask    = cv2.threshold(alpha_channel, threshold, 255, cv2.THRESH_BINARY)
+
+        if post_process:
+            mask = self._post_process_mask(mask)
+
+        cropped, bbox = self._crop_by_mask(image, mask)
+        logger.info(f"완료 — bbox={bbox}, 크롭shape={cropped.shape}")
+        return cropped, mask, confidence
+
+    # ------------------------------------------------------------------
+    # 파이프라인 인터페이스 (FileService 호환)
+    # ------------------------------------------------------------------
+
+    def preprocess_image(self, input_path: str, output_dir: str) -> List[str]:
+        """
+        rembg 배경 분리 → 크롭 이미지 저장 → OCR용 파일 경로 리스트 반환.
+        ImgPreprocessService.preprocess_image()와 동일한 인터페이스.
+        """
+        logger.info("preprocess_image | input=%s", input_path)
+        path = Path(input_path)
+        if not path.exists():
+            raise FileNotFoundError({"status": 404, "message": "path not found", "data": input_path})
+        if not path.is_file():
+            raise IsADirectoryError({"status": 400, "message": "폴더 경로입니다. 이미지 파일 경로 필요.", "data": input_path})
+
+        stem = path.stem
+        cropped, mask, confidence = self.remove_background_from_file(str(path))
+        logger.info("배경 분리 완료 | stem=%s | confidence=%.3f", stem, confidence)
+
+        self.save_result(cropped, mask, output_dir=output_dir, stem=stem, save_mask=True)
+
+        cropped_path = str(Path(output_dir) / stem / f"{stem}_cropped.png")
+        return [cropped_path]
+
+    # ------------------------------------------------------------------
+    # 결과 저장
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def save_result(
+        cropped:    np.ndarray,
+        mask:       np.ndarray,
+        output_dir: str,
+        stem:       str,
+        save_mask:  bool = True,
+    ) -> None:
+        """크롭 이미지와 마스크를 output_dir/stem/ 경로에 저장."""
+        logger.info("save_result | 결과 저장")
+        out = Path(output_dir) / stem
+        out.mkdir(parents=True, exist_ok=True)
+        cv2.imwrite(str(out / f"{stem}_cropped.png"), cropped)
+        if save_mask:
+            cv2.imwrite(str(out / f"{stem}_mask.png"), mask)
+
+    # ------------------------------------------------------------------
+    # 환경 점검
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def check_installation() -> dict:
+        """필수 패키지 및 모델 파일 존재 여부 점검."""
+        logger.info("check_installation | 패키지 및 모델 파일 점검")
+        results = {}
+        for pkg in ["rembg", "onnxruntime", "cv2", "PIL"]:
+            try:
+                __import__(pkg)
+                results[pkg] = "설치됨"
+            except ImportError:
+                results[pkg] = "미설치"
+
+        for label, path in [
+            ("u2net.onnx",  ImgBackgroundPreprocess.DEFAULT_MODEL_PATH),
+            ("u2netp.onnx", ImgBackgroundPreprocess.FALLBACK_MODEL_PATH),
+        ]:
+            if path.exists():
+                mb = path.stat().st_size / (1024 * 1024)
+                results[label] = f"존재 ({mb:.1f}MB)"
+            else:
+                results[label] = f"없음 ({path})"
+        return results
+
+    # ------------------------------------------------------------------
+    # 내부 처리
+    # ------------------------------------------------------------------
+
+    def _auto_threshold(self, alpha: np.ndarray) -> int:
+        """
+        알파 채널 분포 기반 이진화 임계값 자동 탐색.
+        transparent_mode=True: 낮은 알파도 보존 (반투명 제품용).
+        transparent_mode=False: Otsu로 최적 이진화점 탐색.
+        """
+        logger.info("_auto_threshold | 알파 분포 기반 임계값 자동 탐색")
+        if self.transparent_mode:
+            nz = alpha[alpha > 0]
+            return int(max(10, np.percentile(nz, 10))) if len(nz) > 0 else 30
+        thresh = int(cv2.threshold(alpha, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[0])
+        return max(thresh, 10)
+
+    def _estimate_confidence(self, alpha: np.ndarray) -> float:
+        """
+        알파 채널 분포에서 분리 신뢰도 추정.
+        이분포(bimodal) 정도를 측정: 0 또는 255에 가까운 픽셀 비율이 높을수록 신뢰도 높음.
+        """
+        logger.info("_estimate_confidence | 알파 분포 기반 신뢰도 추정")
+        total     = alpha.size
+        near_zero = int(np.sum(alpha < 30))
+        near_full = int(np.sum(alpha > 225))
+        confidence = float(np.clip((near_zero + near_full) / max(total, 1), 0.0, 1.0))
+        return round(confidence, 3)
+
+    def _post_process_mask(self, mask: np.ndarray) -> np.ndarray:
+        """마스크 후처리: 경계 계단 현상 및 내부 구멍 제거."""
+        logger.info("_post_process_mask | 마스크 후처리 (경계 개선, 구멍 제거)")
+        h, w   = mask.shape[:2]
+        ksize  = max(5, min(int(max(h, w) * 0.012), 31))
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (ksize, ksize))
+        mask   = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=2)
+        mask   = cv2.morphologyEx(mask, cv2.MORPH_OPEN,  kernel, iterations=1)
+
+        result     = mask.copy()
+        cnts, hier = cv2.findContours(mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+        if hier is not None:
+            for i, h in enumerate(hier[0]):
+                if h[3] >= 0:
+                    cv2.drawContours(result, cnts, i, 255, cv2.FILLED)
+        return result
+
+    def _crop_by_mask(
+        self,
+        image: np.ndarray,
+        mask:  np.ndarray,
+        pad:   int = 10,
+    ) -> Tuple[np.ndarray, Tuple[int, int, int, int]]:
+        """마스크 기반 bounding box 크롭."""
+        logger.info("_crop_by_mask | 마스크 기반 이미지 크롭")
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if not contours:
+            raise ValueError("마스크에서 유효한 객체 없음")
+
+        all_pts    = np.concatenate(contours)
+        x, y, w, h = cv2.boundingRect(all_pts)
+
+        ih, iw = image.shape[:2]
+        x1 = max(0, x - pad)
+        y1 = max(0, y - pad)
+        x2 = min(iw, x + w + pad)
+        y2 = min(ih, y + h + pad)
+
+        return image[y1:y2, x1:x2].copy(), (x1, y1, x2 - x1, y2 - y1)
+
