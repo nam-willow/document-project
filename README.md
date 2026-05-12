@@ -39,8 +39,8 @@
     | 2. 파일 저장 + 타입 판별 (이미지? PDF?)
     v
 [전처리]
-    ├── 이미지 → 필요한 부분만 잘라서 여러 이미지 경로 반환
-    └── PDF   → 그대로 PDF 경로 반환
+    ├── 이미지 → rembg(u2net) 배경 분리 후 크롭 이미지 경로 반환
+    └── PDF   → 페이지별 이미지 변환 후 이미지 전처리 경로 반환
     |
     | 3. 즉시 job_id 반환 ("접수됐어요" 응답)
     v
@@ -71,8 +71,8 @@
 | ✅ 완료 | 파일 업로드 + 타입 판별 | 완성 |
 | ✅ 완료 | EasyOCR 연동 | 완성 |
 | ✅ 완료 | STR(Deep Text Recognition) 연동 | 완성 |
-| ✅ 완료 | 이미지 전처리 연결 (코드 보유 중) | 연결 필요 |
-| ✅ 완료 | PDF 전처리 연결 (코드 보유 중) | 연결 필요 |
+| ✅ 완료 | 이미지 전처리 연결 (rembg 배경 분리) | 완성 |
+| ✅ 완료 | PDF 전처리 연결 (PDF → 이미지 변환 후 전처리) | 완성 |
 | ✅ 완료 | Celery + Redis 작업 큐 | 구현 필요 |
 | ⬜ 예정 | LLM 기반 필드 추출 (1단계) | 구현 필요 |
 | ⬜ 예정 | LayoutLMv3 파인튜닝 (2단계) | 학습 필요 |
@@ -312,8 +312,7 @@ Microsoft가 만든 문서 이해 AI 모델입니다.
 - [ ] Redis 설치 및 실행 (위 설치 방법 참고)
 - [ ] `.env` 파일 생성 및 `ANTHROPIC_API_KEY` 입력
 - [ ] `celery`, `redis`, `anthropic` 패키지 pip 설치
-- [ ] 이미지 전처리 코드를 `app/services/img_preprocess_service.py`에 연결
-- [ ] PDF 전처리 코드를 `app/services/pdf_preprocess_service.py`에 연결
+
 
 ### ML 학습 시 (2단계)
 - [ ] 영수증 이미지 수집 (최소 200장 이상)
@@ -331,6 +330,7 @@ Microsoft가 만든 문서 이해 AI 모델입니다.
 |------|------|-----------|
 | FastAPI | API 서버 프레임워크 | https://fastapi.tiangolo.com |
 | EasyOCR | 이미지에서 글자 읽기 | https://github.com/JaidedAI/EasyOCR |
+| rembg (u2net) | 이미지 배경 분리 — 이미지 전처리 구현 참고 | https://github.com/danielgatis/rembg |
 
 ### 이번에 새로 배울 것
 | 기술 | 역할 | 공부 방법 |
