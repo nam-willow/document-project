@@ -73,9 +73,8 @@
 | ✅ 완료 | STR(Deep Text Recognition) 연동 | 완성 |
 | ✅ 완료 | 이미지 전처리 연결 (rembg 배경 분리) | 완성 |
 | ✅ 완료 | PDF 전처리 연결 (PDF → 이미지 변환 후 전처리) | 완성 |
-| ✅ 완료 | Celery + Redis 작업 큐 | 구현 필요 |
-| ⬜ 예정 | LLM 기반 필드 추출 (1단계) | 구현 필요 |
-| ⬜ 예정 | LayoutLMv3 파인튜닝 (2단계) | 학습 필요 |
+| ✅ 완료 | Celery + Redis 작업 큐 | 완성 |
+| ⬜ 진행중 | LayoutLMv3 파인튜닝 (2단계) | 학습 필요 |
 | ⬜ 예정 | 결과 조회 API | 구현 필요 |
 
 ---
@@ -275,18 +274,11 @@ curl http://localhost:8000/health
 
 ---
 
-## AI 필드 추출 - 2단계 계획
+## AI 필드 추출
 
-### 1단계: Claude API 사용 (지금 바로 가능)
 
-OCR로 뽑은 텍스트를 Claude에게 보내서 구조화된 JSON으로 받습니다.
-`app/services/extraction_service.py`의 `extract_fields` 함수 안에 구현합니다.
 
-- 별도 학습 데이터 불필요
-- 바로 동작 가능
-- 추후 학습 데이터로도 활용 가능 (Claude 결과를 정답으로 사용)
-
-### 2단계: LayoutLMv3 파인튜닝 (직접 학습)
+### LayoutLMv3 파인튜닝 (직접 학습)
 
 Microsoft가 만든 문서 이해 AI 모델입니다.
 텍스트 내용뿐 아니라 **텍스트가 이미지 어디에 있는지(좌표)** 도 함께 학습합니다.
