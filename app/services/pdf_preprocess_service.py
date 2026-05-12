@@ -3,7 +3,7 @@ import fitz  # PyMuPDF
 import math
 from pathlib import Path
 from statistics import median
-from typing import Any
+from typing import Any, List
 import os
 
 logger = get_logger(__name__)
@@ -119,3 +119,65 @@ class PdfPreprocessService:
 
         print("end")
         return [pdf_out]
+
+
+class PdfToImgPreprocessService:
+    """
+    PDF → 페이지별 이미지 변환 → ImgBackgroundPreprocess 전처리 파이프라인.
+
+    preprocess_pdf()는 FileService 인터페이스와 호환되도록
+    전처리된 이미지 경로 리스트를 반환한다.
+    """
+
+    DPI = 200  # PDF 렌더링 해상도
+
+    def __init__(self):
+        from app.services.img_preprocess_service import ImgBackgroundPreprocess
+        self.img_preprocess = ImgBackgroundPreprocess()
+
+    def _render_pdf_to_images(self, input_path: str, images_dir: str) -> List[str]:
+        """PDF 각 페이지를 PNG로 렌더링하여 저장하고 경로 리스트 반환."""
+        doc = fitz.open(input_path)
+        mat = fitz.Matrix(self.DPI / 72, self.DPI / 72)
+        saved = []
+
+        for i, page in enumerate(doc):
+            pix = page.get_pixmap(matrix=mat, alpha=False)
+            page_path = os.path.join(images_dir, f"page_{i+1:03d}.png")
+            pix.save(page_path)
+            saved.append(page_path)
+            logger.info("페이지 렌더링 완료 | page=%d | path=%s", i + 1, page_path)
+
+        doc.close()
+        return saved
+
+    def preprocess_pdf(self, input_path: str, output_dir: str) -> List[str]:
+        """
+        PDF → 이미지 변환 → 이미지 전처리 → 전처리 결과 경로 리스트 반환.
+        FileService.process_file()에서 pdf 분기 시 호출된다.
+        """
+        input_path = Path(input_path)
+        stem = input_path.stem
+
+        product_dir = os.path.join(output_dir, stem)
+        images_dir = os.path.join(product_dir, "pages")
+        os.makedirs(images_dir, exist_ok=True)
+
+        logger.info("PDF → 이미지 변환 시작 | input=%s", input_path)
+        page_paths = self._render_pdf_to_images(str(input_path), images_dir)
+        logger.info("PDF → 이미지 변환 완료 | 페이지 수=%d", len(page_paths))
+
+        preprocessed = []
+        for page_path in page_paths:
+            try:
+                result = self.img_preprocess.preprocess_image(
+                    input_path=page_path,
+                    output_dir=product_dir,
+                )
+                preprocessed.extend(result)
+                logger.info("이미지 전처리 완료 | page=%s", page_path)
+            except Exception as e:
+                logger.error("이미지 전처리 실패, 원본 이미지 사용 | page=%s | error=%s", page_path, e)
+                preprocessed.append(page_path)
+
+        return preprocessed

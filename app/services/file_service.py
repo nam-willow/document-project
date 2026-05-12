@@ -3,7 +3,7 @@ from fastapi import HTTPException, UploadFile
 
 from app.core.config import settings
 from app.core.logging import get_logger
-from app.services.pdf_preprocess_service import PdfPreprocessService
+from app.services.pdf_preprocess_service import PdfPreprocessService, PdfToImgPreprocessService
 from app.services.img_preprocess_service import  ImgPreprocessService, ImgBackgroundPreprocess
 # from app.services.ocr_service import OCRService
 from app.services.ocr_service_easyocr import OCRService as EasyOCRService
@@ -21,6 +21,7 @@ class FileService:
         # self.img_preprocess_service = ImgPreprocessService()
         self.img_preprocess_service = ImgBackgroundPreprocess()
         self.pdf_preprocess_service = PdfPreprocessService()
+        self.pdf_to_img_preprocess_service = PdfToImgPreprocessService()
         # self.ocr_service = OCRService()
         self.ocr_service_easyocr = EasyOCRService()
         self.extraction_service = ExtractionService()
@@ -74,7 +75,7 @@ class FileService:
             preprocessed_path = self.img_preprocess_service.preprocess_image(input_path=str(file_path), output_dir=str(settings.PROCESSED_DIR))
         elif file_type == "pdf":
             print("str(settings.PROCESSED_DIR): ", str(settings.PROCESSED_DIR))
-            preprocessed_path = self.pdf_preprocess_service.preprocess_pdf(input_path=str(file_path), output_dir=str(settings.PROCESSED_DIR))
+            preprocessed_path = self.pdf_to_img_preprocess_service.preprocess_pdf(input_path=str(file_path), output_dir=str(settings.PROCESSED_DIR))
         else:
             raise HTTPException(status_code=400, detail=f"invalid file type: {file_type}")
 
